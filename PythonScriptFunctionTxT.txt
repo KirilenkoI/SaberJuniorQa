@@ -1,0 +1,82 @@
+def is_operator(token):
+    return token in {'+', '-', '*', '/'}
+
+def precedence(operator):
+    return {'+': 1, '-': 1, '*': 2, '/': 2}.get(operator, 0)
+
+def apply_operator(operators, values):
+    operator = operators.pop()
+    right = values.pop()
+    left = values.pop()
+
+    if operator == '+':
+        values.append(left + right)
+    elif operator == '-':
+        values.append(left - right)
+    elif operator == '*':
+        values.append(left * right)
+    elif operator == '/':
+        if right == 0:
+            raise ValueError("Division by zero is not allowed.")
+        values.append(left / right)
+
+def evaluate_expression(tokens):
+    operators = []
+    values = []
+
+    for token in tokens:
+        if token.replace('.', '', 1).isdigit():
+            values.append(float(token))
+        elif is_operator(token):
+            while (operators and is_operator(operators[-1]) and
+                   precedence(operators[-1]) >= precedence(token)):
+                apply_operator(operators, values)
+            operators.append(token)
+        elif token == '(':
+            operators.append(token)
+        elif token == ')':
+            while operators[-1] != '(':
+                apply_operator(operators, values)
+            operators.pop()
+
+    while operators:
+        apply_operator(operators, values)
+
+    return values[0]
+
+def tokenize_expression(expression):
+    # Split expression into tokens
+    tokens = []
+    current_token = ''
+
+    for char in expression:
+        if char.isdigit() or char == '.':
+            current_token += char
+        elif char in {'+', '-', '*', '/'}:
+            if current_token:
+                tokens.append(current_token)
+                current_token = ''
+            tokens.append(char)
+        elif char == '(' or char == ')':
+            if current_token:
+                tokens.append(current_token)
+                current_token = ''
+            tokens.append(char)
+
+    if current_token:
+        tokens.append(current_token)
+
+    return tokens
+
+if __name__ == "__main__":
+    while True:
+        expression = input("Enter a math expression (or 'exit' to quit): ")
+        if expression.lower() == "exit":
+            break
+
+        try:
+            tokens = tokenize_expression(expression)
+            result = evaluate_expression(tokens)
+            print("Result:", result)
+        except Exception as e:
+            print("Error:", str(e))
